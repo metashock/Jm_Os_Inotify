@@ -106,8 +106,6 @@ class Jm_Os_Inotify_Watch
         $this->options = $options;
         $this->inotifyInstance = $inotifyInstance;
         $this->parent = $parent;
-
-
     }
 
 

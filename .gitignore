@@ -1,3 +1,6 @@
 nbproject
 cache.properties
+build/coverage
+build/api
+build/logs
 

@@ -11,7 +11,6 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
      */
     protected $instance;
 
-
     /**
      *
      */
@@ -31,17 +30,19 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
      */
     public function valid(){
         do {
-            $current = $this->current();
+            $current = parent::current();
             if(!$current) {
                 return FALSE;
             }
 
             // if a filter was passed, apply it
             if(is_null($this->filter)
-            || $this->filter->valid($current)) {
+            || $this->filter->valid(new Jm_Os_Inotify_Event(
+                $current, $this->instance
+            ))) {
                 return TRUE;    
             }
-            
+
             // try the next item if neceassary
             $this->next();
         } while (TRUE);
@@ -53,29 +54,29 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
      */
     public function current() {
         $current = parent::current();
-        if(is_null($current)) {
-            return NULL;
-        }
-
         $event = new Jm_Os_Inotify_Event($current, $this->instance);
         $mask = $event->mask();
 
-        // IN_CREATE will be triggered if a file or a directory was created within
-        // a watched directory.
-        if ($mask->contains(IN_CREATE) && $mask->contains(IN_ISDIR)) {
-            $watch = new Jm_Os_Inotify_Watch($filename);
+        if(!$mask->contains(IN_ISDIR)) {
+            return $event;
         }
 
-        // IN_DELETE will be triggered if a file or a directory will be 
-        // deleted within a watched directory
-        if($mask->contains(IN_DELETE) && $mask->contains(IN_ISDIR)) {
-            Jm_Os_Inotify::byPath($filename)->remove();
-        }
+        switch(TRUE) {
+            case $mask->contains(IN_CREATE):
+            case $mask->contains(IN_MOVED_FROM):
+                $parent = $this->instance->findWatch($event->wd());
+                $watch = $this->instance->watch(
+                    $event->fullpath(), $parent->options()
+                );
+                break;
 
-        /* if (($mask & IN_DELETE_SELF) === IN_DELETE_SELF) {
+            case $mask->contains(IN_DELETE):
+            case $mask->contains(IN_MOVED_TO):
+                $watch = $this->instance->findWatch($event->fullpath());
+                $this->instance->unwatch($watch);
+                break;
         }
-        if (($mask & IN_MOVE_SELF) === IN_MOVE_SELF) {
-        } */
+            
         return $event;
     }
 

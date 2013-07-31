@@ -245,7 +245,6 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
 
         foreach($instance->events() as $event) {
             $expectedMask = array_shift($expectedMasks);
-            var_dump($event);
 //            $this->assertEquals($expectedMask, $event->mask()->raw());
             if($event->mask()->contains(IN_MOVED_FROM)) {
                 $expectedPath = $file;
