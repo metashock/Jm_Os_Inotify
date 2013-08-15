@@ -86,8 +86,8 @@ class Jm_Os_Inotify
      *
      * @return Jm_Os_Inotify_Instance
      */
-    public static function init() {
-        return new Jm_Os_Inotify_Instance();        
+    public static function init(Jm_Log $log = NULL) {
+        return new Jm_Os_Inotify_Instance($log);        
     }
 }
 

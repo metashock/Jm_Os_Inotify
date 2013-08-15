@@ -62,6 +62,7 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
                     $stack[]= "$dir/$file";
                     continue 2;
                 } else {
+                    chmod("$dir/$file", 0600);
                     unlink("$dir/$file");
                 }
             }
@@ -115,7 +116,11 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
      */ 
     public function testWatchDirectoryRecursive() {
         $tempnam = tempnam($this->path, uniqid());
-        $options = IN_ALL_EVENTS | Jm_Os_Inotify::IN_X_RECURSIVE;
+        $options = 
+            IN_ALL_EVENTS 
+          | Jm_Os_Inotify::IN_X_RECURSIVE
+          | Jm_Os_Inotify::IN_X_RECURSIVE_FOLLOW;
+
         $recursive = FALSE;
         $instance = Jm_Os_Inotify::init();        
         $watch = $instance->watch($this->path, $options, $recursive);
@@ -124,8 +129,7 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
         $this->assertTrue(is_object($watch));
         $this->assertEquals('Jm_Os_Inotify_Watch', get_class($watch));
         $this->assertEquals($this->path, $watch->path());
-        $this->assertEquals($options & ~Jm_Os_Inotify::IN_X_RECURSIVE,
-            $watch->options());
+        $this->assertEquals($options, $watch->options());
         $this->assertTrue(is_int($watch->wd()));
         $this->assertNull($watch->parentwatch());
         $this->assertEquals($instance, $watch->inotifyInstance());
@@ -255,6 +259,63 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
             $this->assertEquals(
                 $expectedPath, $event->fullpath()
             );
+        }
+    }
+
+
+    /**
+     * 
+     */
+    public function testWait() {
+        $in = Jm_Os_Inotify::init();
+        $in->watch($this->path);
+        foreach($in->wait(0, 1) as $e) {
+            var_dump($e);
+        }
+    }
+
+
+
+    /**
+     * @expectedException Jm_FileSystem_FileNotFoundException
+     */
+    public function testWatch_FileNotFoundException() {
+        $in = Jm_Os_Inotify::init();
+        $in->watch(uniqid());        
+    }
+
+
+    /**
+     * @expectedException Jm_FileSystem_FileNotReadableException
+     */
+    public function testWatch_FileNotReadableException() {
+        $filename = $this->path . '/' . uniqid();
+        // create test file and make it readonly
+        touch($filename);
+        chmod($filename, 0);
+
+        $in = Jm_Os_Inotify::init();
+        $in->watch($filename);
+    }
+
+
+    /**
+     * Tests if watch() will throw the proper exception if the
+     * maximum of watches per user is reached. This test will take
+     * quite long, so I disbabled it by default
+     *
+     * @expectedException Jm_Os_Inotify_Exception
+     */
+    public function testWatchLimit() {
+        // comment next line to exexute this test
+        $this->markTestSkipped('Takes too long :)');
+        $in = Jm_Os_Inotify::init();
+        $limit = (integer) file_get_contents('/proc/sys/fs/inotify/max_user_watches');
+        for($i = 0; $i < $limit + 1; $i++) {
+            $filename = $this->path . '/' . $i;
+            // create test file and make it readonly
+            touch($filename);
+            $in->watch($filename);
         }
     }
 }

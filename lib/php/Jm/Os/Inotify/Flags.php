@@ -1,6 +1,6 @@
 <?php
 
-class Jm_Os_Inotify_EventMask
+class Jm_Os_Inotify_Flags
 {
 
     protected $integer;
@@ -91,6 +91,28 @@ class Jm_Os_Inotify_EventMask
 
         if(($this->integer & IN_ISDIR) === IN_ISDIR){
             $flags []= 'IN_ISDIR';
+        }
+
+        if(($this->integer & IN_ONLYDIR) === IN_ONLYDIR){
+            $flags []= 'IN_ONLYDIR';
+        }
+
+        if(($this->integer & IN_DONT_FOLLOW) === IN_DONT_FOLLOW){
+            $flags []= 'IN_DONT_FOLLOW';
+        }
+
+        if(($this->integer & IN_MASK_ADD) === IN_MASK_ADD){
+            $flags []= 'IN_MASK_ADD';
+        }
+
+        if(($this->integer & IN_ONESHOT) === IN_ONESHOT){
+            $flags []= 'IN_ONESHOT';
+        } 
+
+        if(($this->integer & Jm_Os_Inotify::IN_X_RECURSIVE)
+            === Jm_Os_Inotify::IN_X_RECURSIVE
+        ){
+            $flags []= 'IN_X_RECURSIVE';
         } 
 
         return implode(' | ', $flags); 

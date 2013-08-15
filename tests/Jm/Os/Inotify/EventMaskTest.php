@@ -9,22 +9,30 @@ class Jm_Os_Inotify_EventMaskTest extends PHPUnit_Framework_TestCase
      * human readable representation
      */
     protected $possibleFlags = array(
-           'IN_ACCESS' => IN_ACCESS,
-           'IN_ATTRIB' => IN_ATTRIB,
-           'IN_CLOSE_WRITE' => IN_CLOSE_WRITE,
-           'IN_CLOSE_NOWRITE' => IN_CLOSE_NOWRITE,
-           'IN_CREATE' => IN_CREATE,
-           'IN_DELETE' => IN_DELETE,
-           'IN_DELETE_SELF' => IN_DELETE_SELF,
-           'IN_MODIFY' => IN_MODIFY,
-           'IN_MOVE_SELF' => IN_MOVE_SELF,
-           'IN_MOVED_FROM' => IN_MOVED_FROM,
-           'IN_MOVED_TO' => IN_MOVED_TO,
-           'IN_OPEN' => IN_OPEN,
-           'IN_ISDIR' => IN_ISDIR,
-           'IN_UNMOUNT' => IN_UNMOUNT,
-           'IN_Q_OVERFLOW' => IN_Q_OVERFLOW,
-           'IN_IGNORED' => IN_IGNORED
+        'IN_ACCESS' => IN_ACCESS,
+        'IN_ATTRIB' => IN_ATTRIB,
+        'IN_CLOSE_WRITE' => IN_CLOSE_WRITE,
+        'IN_CLOSE_NOWRITE' => IN_CLOSE_NOWRITE,
+        'IN_CREATE' => IN_CREATE,
+        'IN_DELETE' => IN_DELETE,
+        'IN_DELETE_SELF' => IN_DELETE_SELF,
+        'IN_MODIFY' => IN_MODIFY,
+        'IN_MOVE_SELF' => IN_MOVE_SELF,
+        'IN_MOVED_FROM' => IN_MOVED_FROM,
+        'IN_MOVED_TO' => IN_MOVED_TO,
+        'IN_OPEN' => IN_OPEN,
+        'IN_ISDIR' => IN_ISDIR,
+        'IN_UNMOUNT' => IN_UNMOUNT,
+        'IN_Q_OVERFLOW' => IN_Q_OVERFLOW,
+        'IN_IGNORED' => IN_IGNORED,
+/* add watch specifc options */
+        'IN_ONLYDIR' => IN_ONLYDIR,
+        'IN_DONT_FOLLOW' => IN_DONT_FOLLOW,
+        'IN_MASK_ADD' => IN_MASK_ADD,
+        'IN_ONESHOT' => IN_ONESHOT,
+        
+/* extension */
+        'IN_X_RECURSIVE' => Jm_Os_Inotify::IN_X_RECURSIVE
     );
 
 
@@ -32,7 +40,7 @@ class Jm_Os_Inotify_EventMaskTest extends PHPUnit_Framework_TestCase
      * Just a simple constructor test. Tests the raw() getter as well
      */
     public function testConstruct() {
-        $mask = new Jm_Os_Inotify_EventMask(0);
+        $mask = new Jm_Os_Inotify_Flags(0);
         $this->assertEquals(0, $mask->raw());
     }
 
@@ -43,7 +51,7 @@ class Jm_Os_Inotify_EventMaskTest extends PHPUnit_Framework_TestCase
      */
     public function testToString() {
         foreach($this->possibleFlags as $key => $value) {
-            $mask = new Jm_Os_Inotify_EventMask($value);
+            $mask = new Jm_Os_Inotify_Flags($value);
             $this->assertEquals($key, $mask . '');
         }
     }
@@ -55,7 +63,7 @@ class Jm_Os_Inotify_EventMaskTest extends PHPUnit_Framework_TestCase
      */
     public function testContains() {
         foreach($this->possibleFlags as $key => $value) {
-            $mask = new Jm_Os_Inotify_EventMask($value);
+            $mask = new Jm_Os_Inotify_Flags($value);
             $this->assertTrue($mask->contains($value));
         }
     }

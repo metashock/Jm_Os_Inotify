@@ -22,7 +22,7 @@ class Jm_Os_Inotify_EventIteratorTest extends PHPUnit_Framework_TestCase
         // expected watches
         $instance->expects($this->any())
             ->method('findWatch')
-            ->with(1)
+/*            ->with(1) */
             ->will($this->returnValue(new Jm_Os_Inotify_Watch(
                 'test', $options, 1, $instance 
             )));

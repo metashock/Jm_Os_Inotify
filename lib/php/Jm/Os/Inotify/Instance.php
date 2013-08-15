@@ -85,13 +85,22 @@ class Jm_Os_Inotify_Instance
 
 
     /**
+     * @var Jm_Log
+     */
+    protected $log;
+
+
+    /**
      *
      */
-    public function __construct() {
+    public function __construct(Jm_Log $log = NULL) {
         if(!function_exists('inotify_init')) {
+            // @codeCoverageIgnoreStart
             throw new Exception('inotify is not available on your system');
+            // @codeCoverageIgnoreEnd
         }
         $this->fd = inotify_init();
+        $this->log = $log;
     }
 
 
@@ -124,10 +133,6 @@ class Jm_Os_Inotify_Instance
 
         // recursive tree watches and following is disabled per default
         $recursive = $follow = FALSE;
-        
-        if($path === './ooo') {
-            xdebug_break();
-        }
 
         // check if the recursive flags have been set
         if(($options & Jm_Os_Inotify::IN_X_RECURSIVE)
@@ -142,7 +147,6 @@ class Jm_Os_Inotify_Instance
             if(($options & Jm_Os_Inotify::IN_X_RECURSIVE_FOLLOW)
                 === Jm_Os_Inotify::IN_X_RECURSIVE_FOLLOW
             ) {
-                $options &= ~Jm_Os_Inotify::IN_X_RECURSIVE_FOLLOW;
                 $follow = TRUE;
             }
         }
@@ -152,7 +156,7 @@ class Jm_Os_Inotify_Instance
             return $this->watchRecursive($path, $options, $follow);
         } else {
             $wd = @inotify_add_watch($this->fd(), $path, $options);
-            echo "Watching {$path}\n";
+            $this->log("Watching {$path}");
             if($wd === FALSE) {
                 $error = error_get_last();
                 $msg = is_null($error) ? 'inotify_add_watch(): Unknown error'
@@ -187,7 +191,8 @@ class Jm_Os_Inotify_Instance
             $path = array_pop($stack);
 
             $wd = @inotify_add_watch($this->fd(), $path, $_options);
-            echo "Watching {$path} (wd:$wd) (mask:$_options)\n";
+            $this->log("Watching {$path} (wd:$wd) (mask:$_options)",
+                Jm_Log_Level::DEBUG);
             $watch = new Jm_Os_Inotify_Watch($path, $options, $wd, $this);
             if(is_null($root)) {
                 $root = $watch;
@@ -219,7 +224,9 @@ class Jm_Os_Inotify_Instance
      * @return Jm_Os_Inotify_Instance
      */
     public function unwatch(Jm_Os_Inotify_Watch $watch) {
-        echo "Removing watch {$watch->path()} (wd:{$watch->wd()}\n";
+        $this->log("Removing watch {$watch->path()} (wd:{$watch->wd()})",
+            Jm_Log_Level::DEBUG
+        );
         $ret = @inotify_rm_watch($this->fd(), $watch->wd());
         // @codeCoverageIgnoreStart
         if($ret === FALSE) {
@@ -229,7 +236,7 @@ class Jm_Os_Inotify_Instance
             } else {
                 $message = $error['message'];
             }
-        //    throw new Jm_Os_Inotify_Exception($message);
+            throw new Jm_Os_Inotify_Exception($message);
         }
         // @codeCoverageIgnoreEnd
         unset($this->watches[$watch->wd()]);
@@ -256,7 +263,8 @@ class Jm_Os_Inotify_Instance
         $read = array($this->fd);
         $dummy = array(); 
         stream_set_blocking($this->fd(), 1);
-        $ret = @stream_select($read, $dummy, $dummy, $sec, $usec);
+        $ret = stream_select($read, $dummy, $dummy, $sec, $usec);
+
         switch(TRUE) {
             // an error has occured
             case $ret = FALSE :
@@ -286,6 +294,7 @@ class Jm_Os_Inotify_Instance
      */ 
     public function events() {
         $ret = @stream_set_blocking($this->fd(), 0);
+        // @codeCoverageIgnoreStart
         if($ret === FALSE) {
             $error = error_get_last();
             if(is_null($error)) {
@@ -295,8 +304,10 @@ class Jm_Os_Inotify_Instance
             }
             throw new Exception(__METHOD__ . ': ' . $msg);
         }
+        // @codeCoverageIgnoreEnd
 
-        $events = @inotify_read($this->fd);
+        $events = @inotify_read($this->fd());
+        // @codeCoverageIgnoreStart
         if($events === FALSE) {
             $error = error_get_last();
             // if error_get_last() returns false as inotify_read()
@@ -306,6 +317,7 @@ class Jm_Os_Inotify_Instance
                 throw new Exception(__METHOD__ . ': ' . $msg);
             }
         }
+        // @codeCoverageIgnoreEnd
 
         if(!$events) {
             $events = array();
@@ -365,6 +377,17 @@ class Jm_Os_Inotify_Instance
                 return $this->watch_by_path[$search];
             }
         }
+    }
+
+
+    /**
+     *
+     */
+    protected function log($message) {
+        if(!is_null($this->log)) {
+            $this->log->debug($message);
+        }
+        return $this;
     }
 
 

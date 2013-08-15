@@ -76,7 +76,7 @@ class Jm_Os_Inotify_Event
         }
 
         $this->wd = $eventArray['wd'];
-        $this->mask = new Jm_Os_Inotify_EventMask($eventArray['mask']);
+        $this->mask = new Jm_Os_Inotify_Flags($eventArray['mask']);
         $this->cookie = $eventArray['cookie'];
         $this->name = $eventArray['name'];
         $this->inotifyInstance = $inotifyInstance;

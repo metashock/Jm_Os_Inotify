@@ -15,11 +15,11 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
      *
      */
     public function __construct(
-        array $currents,
+        array $events,
         Jm_Os_Inotify_Instance $instance,
         Jm_Os_Inotify_EventFilter $filter = NULL
     ) {
-        parent::__construct($currents);
+        parent::__construct($events);
         $this->instance = $instance;
         $this->filter = $filter;
     }
@@ -61,6 +61,11 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
             return $event;
         }
 
+        $watch = $this->instance->findWatch($event->fullpath());
+        if($watch && !($watch->options() & Jm_Os_Inotify::IN_X_RECURSIVE)) {
+            return $event;
+        }
+
         switch(TRUE) {
             case $mask->contains(IN_CREATE):
             case $mask->contains(IN_MOVED_FROM):
@@ -72,7 +77,6 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
 
             case $mask->contains(IN_DELETE):
             case $mask->contains(IN_MOVED_TO):
-                $watch = $this->instance->findWatch($event->fullpath());
                 $this->instance->unwatch($watch);
                 break;
         }
