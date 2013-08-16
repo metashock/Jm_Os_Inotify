@@ -91,7 +91,20 @@ class Jm_Os_Inotify_Instance
 
 
     /**
+     * Flag that indicates wheter the  monitoring
+     * loop should break
      *
+     * @var boolean
+     */
+    protected $stopMonitor;
+
+
+    /**
+     * Constructor.
+     *
+     * @param Jm_Log $log Optional log instance for debugging
+     *
+     * @return Jm_Os_Inotify_Instance
      */
     public function __construct(Jm_Log $log = NULL) {
         if(!function_exists('inotify_init')) {
@@ -99,6 +112,7 @@ class Jm_Os_Inotify_Instance
             throw new Exception('inotify is not available on your system');
             // @codeCoverageIgnoreEnd
         }
+        // @TODO check return type
         $this->fd = inotify_init();
         $this->log = $log;
     }
@@ -158,11 +172,13 @@ class Jm_Os_Inotify_Instance
             $wd = @inotify_add_watch($this->fd(), $path, $options);
             $this->log("Watching {$path}");
             if($wd === FALSE) {
+                // @codeCoverageIgnoreStart
                 $error = error_get_last();
                 $msg = is_null($error) ? 'inotify_add_watch(): Unknown error'
                     : $error['message'];
 
                 throw new Jm_Os_Inotify_Exception($msg);
+                // @codeCoverageIgnoreEnd
             }
             $watch = new Jm_Os_Inotify_Watch($path, $options, $wd, $this);
             $this->watches[$wd] = $watch;
@@ -256,25 +272,29 @@ class Jm_Os_Inotify_Instance
      *
      * @return Jm_Os_Inotify_EventIterator
      *
-     * @throws Exception if one out of stream_set_blocking, stream_select
-     * or inotify_read fails
+     * @throws Jm_Os_Inotify_Exception if one out of 
+     * stream_set_blocking, stream_select or inotify_read fails
      */
     public function wait($sec = NULL, $usec = NULL) {
         $read = array($this->fd);
         $dummy = array(); 
-        stream_set_blocking($this->fd(), 1);
-        $ret = stream_select($read, $dummy, $dummy, $sec, $usec);
+        $ret = stream_set_blocking($this->fd(), 1);
 
+
+        // wait using stream_select
+        $ret = stream_select($read, $dummy, $dummy, $sec, $usec);
         switch(TRUE) {
             // an error has occured
-            case $ret = FALSE :
+            case $ret === FALSE :
+                // @codeCoverageIgnoreStart
                 $error = error_get_last();
                 if(is_null($error)) {
                     $msg = 'stream_select(): Unknown error';
                 } else {
                     $msg = $error['message'];
                 }
-                throw new Exception(__METHOD__ . ': ' . $msg);
+                throw new Jm_Os_Inotify_Exception(__METHOD__ . ': ' . $msg);
+                // @codeCoverageIgnoreEnd
 
             // the timeout has been reached
             case $ret === 0 :
@@ -334,7 +354,11 @@ class Jm_Os_Inotify_Instance
         $updateSec = NULL,
         $updateUsec = NULL
     ) {
+        $this->stopMonitor = FALSE;
         while(TRUE) {
+            if($this->stopMonitor === TRUE) {
+                break;
+            }
             foreach($this->wait($updateSec, $updateUsec) as $event) {
                 if(!isset($callbacks[$event->mask()->raw()])) {
                     continue;
@@ -349,9 +373,22 @@ class Jm_Os_Inotify_Instance
         }   
     }
 
+    /**
+     * Sets the stopMonitor flag. A blocking monitoring loop would
+     * break before the next loop and return. This is useful if it 
+     * is called from monitor callback handlers to stop monitoring 
+     * if a certain event has been triggered.
+     *
+     * @return Jm_Os_Inotify_Instance
+     */ 
+    public function stopMonitor() {
+        $this->stopMonitor = TRUE;
+        return $this;
+    }
+
 
     /**
-     * Performs a lookup for watches either by their wd or by theirs path.
+     * Performs a watch lookup either by the wd or by the path.
      * Note that wds are unique per inotify instance only. That's why 
      * the method is part of this class rather than part of the watch class.
      *

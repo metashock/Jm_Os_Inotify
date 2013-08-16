@@ -44,41 +44,17 @@ class Jm_Os_Inotify_Event
      * @return Jm_Os_Inotify_Event
      */
     public function __construct(
-        array $eventArray,
+        $wd, $mask, $cookie, $path,
         Jm_Os_Inotify_Instance $inotifyInstance
     ){
-        if(!isset($eventArray['wd'])) {
-            throw new InvalidArgumentException(
-                '$eventArray was expected to be an assoc array with the ' .
-                'keys: wd, mask, cookie, name. Missing the key: wd'
-            );
-        }
-
-        if(!isset($eventArray['mask'])) {
-            throw new InvalidArgumentException(
-                '$eventArray was expected to be an assoc array with the ' .
-                'keys: wd, mask, cookie, name. Missing the key: mask'
-            );
-        }
-
-        if(!isset($eventArray['cookie'])) {
-            throw new InvalidArgumentException(
-                '$eventArray was expected to be an assoc array with the ' .
-                'keys: wd, mask, cookie, name. Missing the key: cookie'
-            );
-        }
-
-        if(!isset($eventArray['name'])) {
-            throw new InvalidArgumentException(
-                '$eventArray was expected to be an assoc array with the ' .
-                'keys: wd, mask, cookie, name. Missing the key: name'
-            );
-        }
-
-        $this->wd = $eventArray['wd'];
-        $this->mask = new Jm_Os_Inotify_Flags($eventArray['mask']);
-        $this->cookie = $eventArray['cookie'];
-        $this->name = $eventArray['name'];
+        Jm_Util_Checktype::check('integer', $wd);
+        Jm_Util_Checktype::check('integer', $mask);
+        Jm_Util_Checktype::check('integer', $cookie);
+        Jm_Util_Checktype::check('string', $path);
+        $this->wd = $wd;
+        $this->mask = new Jm_Os_Inotify_Flags($mask);
+        $this->cookie = $cookie;
+        $this->path = $path;
         $this->inotifyInstance = $inotifyInstance;
     }
 
@@ -97,25 +73,14 @@ class Jm_Os_Inotify_Event
         return $this->cookie;
     }
 
-
-    public function name() {
-        return $this->name;
-    }
-
-
     /**
-     * @TODO refactor this. The fullpath should be generated once the event is created.
-     * Currently I think this class should be only a simple data containter w/o business logic
+     * Returns the path to the file or directory
+     * which is related to the event.
      *
-     * @throws Jm_Os_Inotify_Exception
+     * @return string
      */
     public function fullpath() {
-        $watch = $this->inotifyInstance->findWatch($this->wd());
-        if(is_null($watch)) {
-            throw new Jm_Os_Inotify_Exception('A watch with descriptor: ' . $this->wd()
-                . ' was not found.');
-        }
-        return $watch->path() . '/' . $this->name();
+        return $this->path;
     }
 }
 

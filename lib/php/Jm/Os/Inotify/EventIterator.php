@@ -16,37 +16,12 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
      */
     public function __construct(
         array $events,
-        Jm_Os_Inotify_Instance $instance,
-        Jm_Os_Inotify_EventFilter $filter = NULL
+        Jm_Os_Inotify_Instance $instance
     ) {
         parent::__construct($events);
         $this->instance = $instance;
-        $this->filter = $filter;
     }
 
-
-    /**
-     * @return boolean
-     */
-    public function valid(){
-        do {
-            $current = parent::current();
-            if(!$current) {
-                return FALSE;
-            }
-
-            // if a filter was passed, apply it
-            if(is_null($this->filter)
-            || $this->filter->valid(new Jm_Os_Inotify_Event(
-                $current, $this->instance
-            ))) {
-                return TRUE;    
-            }
-
-            // try the next item if neceassary
-            $this->next();
-        } while (TRUE);
-    }
 
 
     /**
@@ -54,15 +29,34 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
      */
     public function current() {
         $current = parent::current();
-        $event = new Jm_Os_Inotify_Event($current, $this->instance);
+       
+        $watch = $this->instance->findWatch($current['wd']);
+
+        if($current['mask'] & IN_ISDIR) {
+            $path = $watch->path();
+        } else {
+            $path = $watch->path() . '/' . $current['name'];
+        }
+
+        $event = new Jm_Os_Inotify_Event(
+            $current['wd'],
+            $current['mask'],
+            $current['cookie'],
+            $path,
+            $this->instance
+        );
         $mask = $event->mask();
 
-        if(!$mask->contains(IN_ISDIR)) {
+        // @TODO think about checking for IN_X_RECURSIVE_FOLLOW
+        // here or drop the flag completely
+        if($watch && !($watch->options() & Jm_Os_Inotify::IN_X_RECURSIVE)) {
             return $event;
         }
 
-        $watch = $this->instance->findWatch($event->fullpath());
-        if($watch && !($watch->options() & Jm_Os_Inotify::IN_X_RECURSIVE)) {
+        // if it is a file no further action must be done
+        // @TODO hasn't the watch not to be removed if the file was deleted
+        // or moved out of scope?
+        if(!$mask->contains(IN_ISDIR)) {
             return $event;
         }
 
@@ -86,12 +80,18 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
 
 
     /**
+     * This method throws an exception, that's all. This is because
+     * the method current creates or removes watches. If offsetGet could
+     * be called as well it would be unclear which method should do 
+     * the watch removal / creational work. Also it must be safe that
+     * no action will take place twice. Too much problems for the moment.
+     * That's why "disabled"
      *
+     * @return void Pigs can fly...
+     * 
+     * @throws Exception
      */
     public function offsetGet($index) {
-        $arrayEvent = parent::offsetGet($index);
-        return new Jm_Os_Inotify_Event($arrayEvent, $this->instance);
+        throw new Exception('Not implemented');
     }
-
 }
-

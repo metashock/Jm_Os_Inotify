@@ -4,31 +4,15 @@ class Jm_Os_Inotify_EventTest extends PHPUnit_Framework_TestCase
 {
 
 
-    public function testUsage() {
+    public function testGetSet() {
         // mock an inotify instance and a watch
         $inotifyInstance = $this->getMock('Jm_Os_Inotify_Instance');
-        $watch = $this->getMockBuilder('Jm_Os_Inotify_Watch')
-          ->disableOriginalConstructor()
-          ->getMock();
-
-        // configure the mocked objects
-        $watch->expects($this->once())
-          ->method('path')
-          ->will($this->returnValue('/tmp'));
-
-        $inotifyInstance->expects($this->once())
-          ->method('findWatch')
-          ->will($this->returnValue($watch));
-
-        $event = new Jm_Os_Inotify_Event(array(
-            'wd' => 1, 'mask' => 256, 'cookie' => 0, 'name' => 'test'
-        ), $inotifyInstance);
+        $event = new Jm_Os_Inotify_Event(1, 256, 0, 'test', $inotifyInstance);
 
         $this->assertEquals(1, $event->wd());
         $this->assertEquals(256, $event->mask()->raw());
         $this->assertEquals(0, $event->cookie());
-        $this->assertEquals('test', $event->name());
-        $this->assertEquals('/tmp/test', $event->fullpath());
+        $this->assertEquals('test', $event->fullpath());
     }
 
 
@@ -39,12 +23,12 @@ class Jm_Os_Inotify_EventTest extends PHPUnit_Framework_TestCase
      * @expectedException InvalidArgumentException
      * @dataProvider testInvalidArgumentExceptionDataProvider
      */
-    public function testInvalidArgumentException($args) {
+    public function testInvalidArgumentException($wd, $mask, $cookie, $path) {
         // mock an inotify instance
         $inotifyInstance = $this->getMock('Jm_Os_Inotify_Instance');
 
         $class = new ReflectionClass('Jm_Os_Inotify_Event');
-        $class->newInstance($args, $inotifyInstance);
+        $class->newInstance($wd, $mask, $cookie, $path, $inotifyInstance);
     }
 
 
@@ -55,10 +39,10 @@ class Jm_Os_Inotify_EventTest extends PHPUnit_Framework_TestCase
      */
     public function testInvalidArgumentExceptionDataProvider(){
         return array (
-            array(array('mask' => 1, 'cookie' => 1, 'name' => 'test')),
-            array(array('wd' => 1, 'cookie' => 1, 'name' => 'test')),
-            array(array('wd' => 1, 'mask' => 1, 'name' => 'test')),
-            array(array('wd' => 1, 'mask' => 1, 'cookie' => 1))
+            array('1', 1, 1, 'test'),
+            array(1, '1', 1, 'test'),
+            array(1, 1, '1', 'test'),
+            array(1, 1, 1, 1)
         );
     }
 }

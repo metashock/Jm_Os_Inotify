@@ -27,13 +27,6 @@ class Jm_Os_Inotify_EventIteratorTest extends PHPUnit_Framework_TestCase
                 'test', $options, 1, $instance 
             )));
 
-        $filter = $this->getMockBuilder('Jm_Os_Inotify_EventFilter')
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $filter->expects($this->exactly(4))
-            ->method('valid')
-            ->will($this->onConsecutiveCalls(TRUE, FALSE, FALSE, TRUE));
 
         // event array that looks like events that will be returned by inotify_read().
         $events = array(
@@ -43,10 +36,22 @@ class Jm_Os_Inotify_EventIteratorTest extends PHPUnit_Framework_TestCase
             array('wd' => 1, 'mask' => 1, 'cookie' => 0, 'name' => 'test')
         );
 
-        $iterator = new Jm_Os_Inotify_EventIterator($events, $instance, $filter);
+        $iterator = new Jm_Os_Inotify_EventIterator($events, $instance);
         foreach($iterator as $event) {
             //echo $event->mask() . PHP_EOL;
         }
+    }
+
+
+    /**
+     * Tests that offsetGet is "disabled". The is a poor test
+     * meant for code coverage only.
+     *
+     * @expectedException Exception
+     */
+    public function testOffsetGetException() {
+        $it = $this->getMock('Jm_Os_Inotify_EventIterator');
+        $it->offsetGet(0);
     }
 }
 

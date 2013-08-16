@@ -101,7 +101,6 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
         // one event with mask() IN_IGNORED is expected
         $events = $instance->events();
         $this->assertEquals(1, count($events));
-        $this->assertTrue($events[0]->mask()->contains(IN_IGNORED));
 
         // from now on no further events are expected
         tempnam($this->path, uniqid());
@@ -121,9 +120,12 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
           | Jm_Os_Inotify::IN_X_RECURSIVE
           | Jm_Os_Inotify::IN_X_RECURSIVE_FOLLOW;
 
-        $recursive = FALSE;
-        $instance = Jm_Os_Inotify::init();        
-        $watch = $instance->watch($this->path, $options, $recursive);
+        // using the log observer feature
+        $log = new Jm_Log();
+        $log->attach($observer = new Jm_Log_ArrayObserver());
+        $instance = Jm_Os_Inotify::init($log);
+
+        $watch = $instance->watch($this->path, $options);
 
         // check if $watch has been properly initialized
         $this->assertTrue(is_object($watch));
@@ -260,6 +262,18 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
                 $expectedPath, $event->fullpath()
             );
         }
+
+        // create a directory. a new watch should being created
+        $dirname = $this->path . '/' . uniqid();
+        mkdir($dirname);
+        foreach($instance->events() as $event) {
+        
+        }
+
+        rmdir($dirname);
+        foreach($instance->events() as $event) {
+        
+        }
     }
 
 
@@ -269,9 +283,95 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
     public function testWait() {
         $in = Jm_Os_Inotify::init();
         $in->watch($this->path);
-        foreach($in->wait(0, 1) as $e) {
-            var_dump($e);
-        }
+
+        // test without any events happend
+        $ret = $in->wait(0, 1);
+        $this->assertInstanceOf(
+            'Jm_Os_Inotify_EventIterator',
+            $ret
+        );
+        $this->assertCount(0, $ret);
+
+        // now create a file
+        touch($this->path . '/' . uniqid());
+        $ret = $in->wait(0, 1);
+        $this->assertInstanceOf(
+            'Jm_Os_Inotify_EventIterator',
+            $ret
+        );
+
+        // 4 events should be available now: 
+        // "IN_CREATE", "IN_OPEN", "IN_CLOSE_WRITE", "IN_ATTRIB"
+        $this->assertCount(4, $ret);       
+    }
+
+
+    public function testMonitor() {
+        $in = Jm_Os_Inotify::init();
+        $in->watch($this->path);
+
+        $listener = new StdClass();
+        $listener->onCreate = function(Jm_Os_Inotify_Event $e) 
+            use($listener)
+        {
+            $listener->onCreateCalled = true;
+        };
+        $listener->onOpen = function(Jm_Os_Inotify_Event $e) 
+            use($listener)
+        {
+            $listener->onOpenCalled = true;
+        };
+
+        $listener->onAttrib = function(Jm_Os_Inotify_Event $e) 
+            use($listener, $in)
+        {
+            $listener->onAttribCalled = true;
+            $in->stopMonitor();
+        };
+
+        // I've disabled the close write handler for code coverage
+        // purposes. If an event will be triggered but not handler
+        // is registered for an if block in code will be entered.
+        // removed close write to test this if block
+        touch($this->path . '/' . uniqid());
+        $in->monitor(array(
+            IN_CREATE => $listener->onCreate,
+            IN_ATTRIB => $listener->onAttrib,
+            IN_OPEN => $listener->onOpen,
+//            IN_CLOSE_WRITE => $listener->onCloseWrite //
+        ));
+
+        $this->assertObjectHasAttribute('onCreateCalled', $listener);
+        $this->assertObjectHasAttribute('onOpenCalled', $listener);
+//        $this->assertObjectHasAttribute('onCloseWriteCalled', $listener);
+        $this->assertObjectHasAttribute('onAttribCalled', $listener);
+    }
+
+
+    /**
+     *
+     */
+    public function testFindWatch() {
+        $in = Jm_Os_Inotify::init();
+        $watch = $in->watch($this->path);
+    
+        // lookup by wd   
+        $this->assertEquals(
+            $watch,
+            $in->findWatch($watch->wd())
+        ); 
+
+        // not existend wd should return NULL
+        $this->assertNull($in->findWatch($watch->wd() + 1));
+
+        // lookup by name
+        $this->assertEquals(
+            $watch,
+            $in->findWatch($watch->path())
+        ); 
+
+        // not existend path should return NULL
+        $this->assertNull($in->findWatch($watch->path() . 'test'));
     }
 
 

@@ -92,7 +92,21 @@ class Jm_Os_Inotify_Watch
 
 
     /**
+     * Constructor.
      *
+     * @param string                 $path            Path to the file or 
+     *                                                directory being watched
+     * @param integer                $options         Integer bitmask 
+     *                                                holding inotify options
+     * @param integer                $wd              The id of the watch 
+     *                                                (per inotify instance)
+     * @param Jm_Os_Inotify_Instance $inotifyInstance The inotify queue
+     * @param Jm_Os_Inotify_Watch    $parent          The parent watch. Used 
+     *                                                with recursive watches
+     *
+     * @return Jm_Os_Inotify_Watch
+     *
+     * @throws InvalidArgumentException if one of the arguments type mismatch
      */
     public function __construct (
         $path,
@@ -100,7 +114,10 @@ class Jm_Os_Inotify_Watch
         $wd,
         Jm_Os_Inotify_Instance $inotifyInstance,
         Jm_Os_Inotify_Watch $parent = NULL
-    ){
+    ) {
+        Jm_Util_Checktype::check('string', $path);
+        Jm_Util_Checktype::check('integer', $options);
+        Jm_Util_Checktype::check('integer', $wd);
         $this->path = $path;
         $this->wd = $wd;
         $this->options = $options;
@@ -110,26 +127,8 @@ class Jm_Os_Inotify_Watch
 
 
     /**
-     * Removes the reference from the descriptor table
+     * Returns the path to the watched file or directory
      *
-     * @return void
-     */
-    public function __destruct() {
-
-    }
-
-
-    /**
-     * Performs a lookup instance by watch descriptor
-     *
-     * @return Jm_Os_Inotify_Watch
-     */
-    public static function byDescriptor($wd) {
-
-    }
-
-
-    /**
      * @return string
      */
     public function path() {
@@ -138,7 +137,9 @@ class Jm_Os_Inotify_Watch
 
 
     /**
-     * @return string
+     * Returns the options bitmask
+     *
+     * @return integer
      */
     public function options() {
         return $this->options;
@@ -146,7 +147,9 @@ class Jm_Os_Inotify_Watch
 
 
     /**
-     * @return string
+     * Returns the watch id (per inotify instance)
+     *
+     * @return integer
      */
     public function wd() {
         return $this->wd;
@@ -154,13 +157,22 @@ class Jm_Os_Inotify_Watch
 
     
     /**
+     * Returns the inotify instance this watch belongs to.
      *
+     * @return Jm_Os_Inotify_Instance
      */
     public function inotifyInstance() {
         return $this->inotifyInstance;
     }
 
 
+    /**
+     * Returns the parent watch, if exists. Otherwise NULL.
+     * The method is called parentwatch() instead of just parent()
+     * because parent is a reserved word in PHP.
+     *
+     * @return Jm_OS_Inotify_Watch|NULL 
+     */
     public function parentwatch() {
         return $this->parent;
     }
