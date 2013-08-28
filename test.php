@@ -11,7 +11,6 @@ $log->attach(new Jm_Log_ConsoleObserver());
 $in = Jm_Os_Inotify::init($log);
 $watch = $in->watch('.', IN_ALL_EVENTS
 #    | Jm_Os_Inotify::IN_X_RECURSIVE
-#    | Jm_Os_Inotify::IN_X_RECURSIVE_FOLLOW
 );
 
 $in->monitor(array(

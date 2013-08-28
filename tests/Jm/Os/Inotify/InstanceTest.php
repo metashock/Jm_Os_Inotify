@@ -115,10 +115,7 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
      */ 
     public function testWatchDirectoryRecursive() {
         $tempnam = tempnam($this->path, uniqid());
-        $options = 
-            IN_ALL_EVENTS 
-          | Jm_Os_Inotify::IN_X_RECURSIVE
-          | Jm_Os_Inotify::IN_X_RECURSIVE_FOLLOW;
+        $options = IN_ALL_EVENTS | Jm_Os_Inotify::IN_X_RECURSIVE;
 
         // using the log observer feature
         $log = new Jm_Log();
@@ -246,12 +243,12 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
 
         rename($file, $tempnam);
         $expectedMasks = array(
-            IN_MOVED_FROM, IN_MOVED_TO
+            IN_MOVED_TO, IN_MOVED_FROM
         );
 
         foreach($instance->events() as $event) {
             $expectedMask = array_shift($expectedMasks);
-//            $this->assertEquals($expectedMask, $event->mask()->raw());
+            $this->assertEquals($expectedMask, $event->mask()->raw());
             if($event->mask()->contains(IN_MOVED_FROM)) {
                 $expectedPath = $file;
             } else {
@@ -266,9 +263,9 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
         // create a directory. a new watch should being created
         $dirname = $this->path . '/' . uniqid();
         mkdir($dirname);
-        foreach($instance->events() as $event) {
-        
-        }
+        $expectedMasks = array(
+            IN_CREATE | IN_ISDIR
+        );
 
         rmdir($dirname);
         foreach($instance->events() as $event) {
@@ -359,7 +356,7 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(
             $watch,
             $in->findWatch($watch->wd())
-        ); 
+        );
 
         // not existend wd should return NULL
         $this->assertNull($in->findWatch($watch->wd() + 1));

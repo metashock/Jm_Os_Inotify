@@ -72,15 +72,6 @@ class Jm_Os_Inotify
     const IN_X_RECURSIVE = 0x00010000;
 
     /**
-     * I have choosen this value as it is inside a free range.
-     * @see linux/src/include/linux/inotify.h
-     *
-     * @const integer
-     */ 
-    const IN_X_RECURSIVE_FOLLOW = 0x00020000;
-
-
-    /**
      * Factory method. Returns a new inotify instance. Currently
      * it is the same as calling <code>new Jm_Os_Inotify_Instance()</code>
      *

@@ -152,74 +152,52 @@ class Jm_Os_Inotify_Instance
         if(($options & Jm_Os_Inotify::IN_X_RECURSIVE)
             === Jm_Os_Inotify::IN_X_RECURSIVE
         ) {
-
             $recursive = TRUE;
-
-            // check if we should follow newly created directories.
-            // following means that if a new directory is created inside
-            // a watched directory a watch would been added for it.
-            if(($options & Jm_Os_Inotify::IN_X_RECURSIVE_FOLLOW)
-                === Jm_Os_Inotify::IN_X_RECURSIVE_FOLLOW
-            ) {
-                $follow = TRUE;
-            }
         }
 
-        // add the watch
-        if($recursive === TRUE) {
-            return $this->watchRecursive($path, $options, $follow);
-        } else {
-            $wd = @inotify_add_watch($this->fd(), $path, $options);
-            $this->log("Watching {$path}");
-            if($wd === FALSE) {
-                // @codeCoverageIgnoreStart
-                $error = error_get_last();
-                $msg = is_null($error) ? 'inotify_add_watch(): Unknown error'
-                    : $error['message'];
-
-                throw new Jm_Os_Inotify_Exception($msg);
-                // @codeCoverageIgnoreEnd
-            }
-            $watch = new Jm_Os_Inotify_Watch($path, $options, $wd, $this);
-            $this->watches[$wd] = $watch;
-            $this->watch_by_path[$path] = $watch;
-            return $watch;
-        }
-    }
-
-
-
-    /**
-     *
-     */
-    protected function watchRecursive($path, $options) {
         $stack = array($path);
         $rollback = false;
         $root = NULL;
         
-        // remove that X_* flags from the options mask as it would 
+        // remove that IN_X_RECURSIVE flag from the options mask as it would 
         // otherwise lead to problems interpreting the event masks
         // returned by inotify_read()
         $_options = $options & ~Jm_Os_Inotify::IN_X_RECURSIVE;
-        $_options = $_options & ~Jm_Os_Inotify::IN_X_RECURSIVE_FOLLOW;        
-        
+
         do {
+
+            // get the next path from stack
             $path = array_pop($stack);
 
+            // add the watch to the underlying inotify instance
             $wd = @inotify_add_watch($this->fd(), $path, $_options);
+
+            // log for debugging
             $this->log("Watching {$path} (wd:$wd) (mask:$_options)",
                 Jm_Log_Level::DEBUG);
+
+            // create a new watch object
             $watch = new Jm_Os_Inotify_Watch($path, $options, $wd, $this);
+
+            // if this is the first watch which has been created
+            // it is the root
             if(is_null($root)) {
                 $root = $watch;
             }
+
+            // add a reference to the watch to the lookup tables
             $this->watches[$wd] = $watch;
             $this->watch_by_path[$path] = $watch;
+
+            if(!$recursive) {
+                break;
+            }
+
+            // push sub directories to the stack
             foreach(scandir($path) as $file) {
                 if($file === '.' || $file === '..' || !is_dir($path . '/' . $file)) {
                     continue;
                 }
-                
                 $stack []= $path . '/' . $file;
             }
         } while(!empty($stack));
