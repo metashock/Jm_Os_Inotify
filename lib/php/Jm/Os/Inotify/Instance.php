@@ -1,6 +1,6 @@
 <?php
 /**
- * Jm_OS_Inotify
+ * Jm_Os_Inotify
  *
  * Copyright (c) 2013, Thorsten Heymann <thorsten@metashock.de>.
  * All rights reserved.
@@ -122,7 +122,9 @@ class Jm_Os_Inotify_Instance
     /**
      * Adds a path to the watch pool
      *
-     * @param string $path
+     * @param string  $path    Path to the file or directory to be watched
+     * @param integer $options Bitmask of options. Available options are
+     *                         documented in the README.md
      *
      * @return Jm_Os_Inotify_Watch
      *
@@ -131,7 +133,7 @@ class Jm_Os_Inotify_Instance
     public function watch (
         $path = '',
         $options = IN_ALL_EVENTS
-    ){
+    ) {
         // check file permission for $path
         if(!file_exists($path)) {
             throw new Jm_Filesystem_FileNotFoundException(
@@ -156,7 +158,7 @@ class Jm_Os_Inotify_Instance
         }
 
         $stack = array($path);
-        $rollback = false;
+        $rollback = FALSE;
         $root = NULL;
         
         // remove that IN_X_RECURSIVE flag from the options mask as it would 
@@ -195,7 +197,10 @@ class Jm_Os_Inotify_Instance
 
             // push sub directories to the stack
             foreach(scandir($path) as $file) {
-                if($file === '.' || $file === '..' || !is_dir($path . '/' . $file)) {
+                if($file === '.' 
+                  || $file === '..' 
+                  || !is_dir($path . '/' . $file)
+                ) {
                     continue;
                 }
                 $stack []= $path . '/' . $file;
@@ -214,6 +219,8 @@ class Jm_Os_Inotify_Instance
     /**
      * Removes a watch. Note that $watch will be set to NULL
      * after calling this metod
+     *
+     * @param Jm_Os_Inotify_Watch $watch The watch to be removed
      *
      * @return Jm_Os_Inotify_Instance
      */
@@ -245,8 +252,8 @@ class Jm_Os_Inotify_Instance
      * and or milliseconds. If both have been omitted the method will
      * forever until some events occur.
      *
-     * @param integer $sec   Timeout in seconds
-     * @param inteher $usec  Timeout in microseconds
+     * @param integer $sec  Timeout in seconds
+     * @param inteher $usec Timeout in microseconds
      *
      * @return Jm_Os_Inotify_EventIterator
      *
@@ -325,7 +332,20 @@ class Jm_Os_Inotify_Instance
 
 
     /**
+     * Allows the register callbacks for certain event types. The method will
+     * block unless you call stopMonitor() from a callback. The timeout
+     * parameter is just for enternal usage: Internally the method will poll
+     * and not block. Thus to make it possible to make a script not hang
+     * when Ctrl+C is pressed and/or make it possible to use IPC signal
+     * handling in the script.
+     * 
+     * @param array   $callbacks  Assoc array where the key is one of the
+     *                            inotify event constants and the value
+     *                            a callback or an anonymous function
+     * @param integer $updateSec  Update interval in seconds
+     * @param integer $updateUsec Update interval in micro seconds
      *
+     * @return Jm_Os_Inotify_Instance
      */
     public function monitor(
         array $callbacks,
@@ -348,8 +368,11 @@ class Jm_Os_Inotify_Instance
                     $this
                 );
             }
-        }   
+        }
+
+        return $this; 
     }
+
 
     /**
      * Sets the stopMonitor flag. A blocking monitoring loop would
@@ -396,7 +419,13 @@ class Jm_Os_Inotify_Instance
 
 
     /**
+     * Logs a message using the jam log mechanism. Checks if a logger
+     * has been registered. If a logger has been registered the message
+     * gets logged using the debug() method of the logger.
      *
+     * @param string $message The log message
+     *
+     * @return Jm_Os_Inotify_Instance
      */
     protected function log($message) {
         if(!is_null($this->log)) {

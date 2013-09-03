@@ -1,6 +1,6 @@
 <?php
 /**
- * Jm_OS_Inotify
+ * Jm_Os_Inotify
  *
  * Copyright (c) 2013, Thorsten Heymann <thorsten@metashock.de>.
  * All rights reserved.
@@ -171,7 +171,7 @@ class Jm_Os_Inotify_Watch
      * The method is called parentwatch() instead of just parent()
      * because parent is a reserved word in PHP.
      *
-     * @return Jm_OS_Inotify_Watch|NULL 
+     * @return Jm_Os_Inotify_Watch|NULL 
      */
     public function parentwatch() {
         return $this->parent;

@@ -1,6 +1,6 @@
 <?php
 /**
- * Jm_OS_Inotify
+ * Jm_Os_Inotify
  *
  * Copyright (c) 2013, Thorsten Heymann <thorsten@metashock.de>.
  * All rights reserved.
@@ -64,6 +64,8 @@ class Jm_Os_Inotify
 {
   
     /**
+     * This flag indicates that a directory should be watched recursively.
+     *
      * I have choosen this value as it is inside a free range.
      * @see linux/src/include/linux/inotify.h
      *
@@ -75,10 +77,12 @@ class Jm_Os_Inotify
      * Factory method. Returns a new inotify instance. Currently
      * it is the same as calling <code>new Jm_Os_Inotify_Instance()</code>
      *
+     * @param Jm_Log $log Optional logging facility for debugging purposes.
+     *
      * @return Jm_Os_Inotify_Instance
      */
     public static function init(Jm_Log $log = NULL) {
-        return new Jm_Os_Inotify_Instance($log);        
+        return new Jm_Os_Inotify_Instance($log); 
     }
 }
 
