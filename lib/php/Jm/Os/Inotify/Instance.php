@@ -85,6 +85,8 @@ class Jm_Os_Inotify_Instance
 
 
     /**
+     * Optional logger for debugging
+     *
      * @var Jm_Log
      */
     protected $log;
@@ -218,7 +220,9 @@ class Jm_Os_Inotify_Instance
 
     /**
      * Removes a watch. Note that $watch will be set to NULL
-     * after calling this metod
+     * after calling this method. Don't call this method after you've 
+     * received an IN_DELETE_SELF event because the kernel has cleaned 
+     * up the related watch automatically. Call cleanupDeletedWatch() instead
      *
      * @param Jm_Os_Inotify_Watch $watch The watch to be removed
      *
@@ -240,9 +244,23 @@ class Jm_Os_Inotify_Instance
             throw new Jm_Os_Inotify_Exception($message);
         }
         // @codeCoverageIgnoreEnd
+        $this->cleanupDeletedWatch($watch);
+        return $this; 
+    }
+
+
+    /**
+     * Removes a watch from the lookup tables. Meant to be called
+     * after an IN_DELETE_SELF event has been received.
+     *
+     * @param Jm_Os_Inotify_Watch $watch The watch to be cleaned up
+     *
+     * @return Jm_Os_Inotify_Instance
+     */
+    public function cleanupDeletedWatch(Jm_Os_Inotify_Watch $watch) {
         unset($this->watches[$watch->wd()]);
         unset($this->watch_by_path[$watch->path()]);
-        return $this; 
+        return $this;
     }
 
 

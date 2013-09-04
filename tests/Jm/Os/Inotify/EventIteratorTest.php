@@ -36,10 +36,15 @@ class Jm_Os_Inotify_EventIteratorTest extends PHPUnit_Framework_TestCase
             array('wd' => 1, 'mask' => 1, 'cookie' => 0, 'name' => 'test')
         );
 
-        $iterator = new Jm_Os_Inotify_EventIterator($events, $instance);
-        foreach($iterator as $event) {
-            //echo $event->mask() . PHP_EOL;
-        }
+        $events = new Jm_Os_Inotify_EventIterator($events, $instance);
+        
+        $c = 0;
+        foreach($events as $event) { $c++;}
+        $this->assertEquals(4, $c);
+        // events are accessible only once. ensure this
+        $c = 0;
+        foreach($events as $event) { $c++;}
+        $this->assertEquals(0, $c);
     }
 
 

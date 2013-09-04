@@ -66,9 +66,29 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
 {
 
     /**
+     * The related inotify instance
+     * 
      * @var Jm_Os_Inotify_Instance
      */
     protected $instance;
+
+
+    /**
+     * Contains watches that have to be removed after
+     * iteration over all events
+     *
+     * @var array
+     */
+    protected $garbage;
+
+
+    /** 
+     * It is important that only one time iteration over events is possible
+     * 
+     * @var boolean
+     */
+    protected $processed;
+
 
     /**
      * Constructor
@@ -82,6 +102,8 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
     ) {
         parent::__construct($events);
         $this->instance = $instance;
+        $this->garbage = array();
+        $this->processed = FALSE;
     }
 
 
@@ -91,14 +113,15 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
      * @return Jm_Os_Inotify_Event
      */
     public function current() {
-        $current = parent::current();
-       
-        $watch = $this->instance->findWatch($current['wd']);
 
-        if($current['mask'] & IN_ISDIR) {
-            $path = $watch->path();
-        } else {
-            $path = $watch->path() . '/' . $current['name'];
+        $current = parent::current();
+        $watch = $this->instance->findWatch($current['wd']);
+        $path = $watch->path();
+
+        // if this event is related to file we use the 
+        // name property
+        if(!($current['mask'] & IN_ISDIR)) {
+            $path .= '/' . $current['name'];
         }
 
         $event = new Jm_Os_Inotify_Event(
@@ -108,37 +131,55 @@ class Jm_Os_Inotify_EventIterator extends ArrayIterator
             $path,
             $this->instance
         );
+
         $mask = $event->mask();
 
-        // @TODO think about checking for IN_X_RECURSIVE_FOLLOW
-        // here or drop the flag completely
-        if($watch && !($watch->options() & Jm_Os_Inotify::IN_X_RECURSIVE)) {
-            return $event;
-        }
-
-        // if it is a file no further action must be done
-        // @TODO hasn't the watch not to be removed if the file was deleted
-        // or moved out of scope?
-        if(!$mask->contains(IN_ISDIR)) {
+        if($watch && !($watch->options()
+            & Jm_Os_Inotify::IN_X_RECURSIVE)
+        ) {
             return $event;
         }
 
         switch(TRUE) {
-            case $mask->contains(IN_CREATE):
-            case $mask->contains(IN_MOVED_FROM):
-                $parent = $this->instance->findWatch($event->wd());
+            case $mask->contains(IN_CREATE)
+                && $event->mask()->contains(IN_ISDIR) :
                 $watch = $this->instance->watch(
-                    $event->fullpath(), $parent->options()
+                    $event->fullpath(), $watch->options()
+                        // it must be sure that we'll receive this
+                        // events to keep the watch list up to date
+                        | IN_DELETE_SELF | IN_MOVED_TO
                 );
                 break;
 
-            case $mask->contains(IN_DELETE):
-            case $mask->contains(IN_MOVED_TO):
-                $this->instance->unwatch($watch);
+            case $mask->contains(IN_DELETE_SELF):
+                $this->garbage []= $watch;
                 break;
         }
             
         return $event;
+    }
+
+
+    /**
+     * The method cleans up unused watches after all events had 
+     * been iterated over. Also the method makes sure that 
+     * iteration over events is only one time possible.
+     *
+     * @return boolean
+     */
+    public function valid() {
+        if($this->processed === TRUE) {
+            return FALSE;
+        }
+
+        $valid = parent::valid();
+        if($valid === FALSE) {
+            foreach($this->garbage as $watch) {
+                $this->instance->cleanupDeletedWatch($watch);
+            }
+            $this->processed = TRUE;
+        }
+        return $valid;
     }
 
 

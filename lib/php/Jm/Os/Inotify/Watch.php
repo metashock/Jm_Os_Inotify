@@ -62,10 +62,13 @@
  */
 class Jm_Os_Inotify_Watch
 {
-     /**
-     *  @var string
+    /**
+     * Path to the 
+     *
+     * @var string
      */
     protected $path;
+
 
     /**
      * Bitmask of options
@@ -73,6 +76,7 @@ class Jm_Os_Inotify_Watch
      * @var integer
      */
     protected $options;
+
 
     /**
      * Points to the underlying watch descriptor

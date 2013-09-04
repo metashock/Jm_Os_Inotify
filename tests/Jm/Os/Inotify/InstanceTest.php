@@ -397,6 +397,37 @@ class Jm_Os_Inotify_InstanceTest extends PHPUnit_Framework_TestCase
 
 
     /**
+     * This test ensures that dynamically added watches
+     * in recursive mode will be removed after the related 
+     * directories have been removed
+     */
+    public function testDeleteWatches() {
+        $dir1 = $this->path . '/' . uniqid();
+        $dir2 = $this->path . '/' . uniqid();
+        mkdir($dir1);
+        mkdir($dir2);
+
+        $in = Jm_Os_Inotify::init();
+        $in->watch($this->path, 
+            IN_ALL_EVENTS | Jm_Os_Inotify::IN_X_RECURSIVE);
+
+        rmdir($dir1);
+        rmdir($dir2);
+
+        $events = $in->events();
+        foreach($events as $event) {
+            // foreach will call EventIterator::current() which will
+            // cleanup unused watches
+        }
+
+        // the watches for the removd directories should not exist anymore
+        $this->assertNull($in->findWatch(2));
+        $this->assertNull($in->findWatch(3));
+    }
+
+
+
+    /**
      * Tests if watch() will throw the proper exception if the
      * maximum of watches per user is reached. This test will take
      * quite long, so I disbabled it by default

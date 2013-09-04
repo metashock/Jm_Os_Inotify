@@ -78,7 +78,9 @@ class Jm_Os_Inotify_Event
 
 
     /**
-     * @see http://man7.org/linux/man-pages/man7/inotify.7.html#cookie
+     * A unique integer that connects related events. Currently this 
+     * is only used for rename events, and allows the resulting pair of 
+     * IN_MOVE_FROM and IN_MOVE_TO events to be connected by the application.
      *
      * @var integer
      */
