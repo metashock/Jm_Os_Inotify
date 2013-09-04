@@ -27,6 +27,10 @@
 
    <exclude name="PEAR.Commenting.ClassComment.InvalidVersion" />
 
+   <!-- PEAR disallows indented case statements in switch block. don't like that.
+        Adding the generic rule later on -->
+   <exclude name="PEAR.WhiteSpace.ScopeIndent" /> 
+
    <!-- TRUE, FALSE and NULL must be uppercased -->
    <exclude name="Generic.PHP.LowerCaseConstant" />  
  </rule>
@@ -43,7 +47,7 @@
 
  <!-- enforce having the '{' at the same line as the function definition -->
  <!-- rest in peace Mr. Ritchie -->
- <rule ref="Generic.Functions.OpeningFunctionBraceKernighanRitchie" /> 
+ <rule ref="Generic.Functions.OpeningFunctionBraceKernighanRitchie" />
  <!-- Lines can be 80 chars long, but never show errors -->
  <rule ref="Generic.Files.LineLength">
   <properties>
@@ -51,5 +55,10 @@
    <property name="absoluteLineLimit" value="0"/>
   </properties>
  </rule>
+
+ <!-- have disable the PEAR scope indent rule as it disallows indented
+      case statements in a switch block. The generic rule will do the 
+      same work expect of excluding switch. here it comes .. -->
+  <rule ref="Generic.WhiteSpace.ScopeIndent" />
  <!-- ... -->
 </ruleset>
