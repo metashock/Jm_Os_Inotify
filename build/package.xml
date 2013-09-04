@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package packagerversion="1.9.4" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0     http://pear.php.net/dtd/tasks-1.0.xsd     http://pear.php.net/dtd/package-2.0     http://pear.php.net/dtd/package-2.0.xsd">
+ <name>Jm_Os_Inotify</name>
+ <channel>www.metashock.de/pear</channel>
+ <summary>PHP wrapper classes for the inotify extension.</summary>
+ <description>This package adds the following functionalities: recursive directory watches, provide the full path to files (inotify itself only supports basename)</description>
+ <lead>
+  <name>Thorsten Heymann</name>
+  <user>hek2mgl</user>
+  <email>hek2mgl at metashock.net</email>
+  <active>yes</active>
+ </lead>
+ <date>2013-09-04</date>
+ <time>14:01:04</time>
+ <version>
+  <release>$$RELEASE_VERSION$$</release>
+  <api>$$API_VERSION$$</api>
+ </version>
+ <stability>
+  <release>stable</release>
+  <api>stable</api>
+ </stability>
+ <license uri="http://www.opensource.org/licenses/BSD-3-Clause">BSD-3</license>
+ <notes>
+-
+ </notes>
+ <contents>
+  <dir name=".">
+    <dir name="Jm/Os">
+      <file name="Inotify.php" role="php" />
+      <dir name="Inotify">
+        <file name="EventIterator.php" role="php" />
+        <file name="Event.php" role="php" />
+        <file name="Exception.php" role="php" />
+        <file name="Flags.php" role="php" />
+        <file name="Instance.php" role="php" />
+        <file name="Watch.php" role="php" />
+      </dir>
+    </dir>
+
+    <file name="tests/bootstrap.php" role="test" />
+
+    <dir name="tests/Jm/Os">
+      <file name="InotifyTest.php" role="test"/>
+      <dir name="Inotify">
+        <file name="EventIteratorTest.php" role="test"/>
+        <file name="EventTest.php" role="test" />
+        <file name="EventMaskTest.php" role="test" />
+        <file name="InstanceTest.php" role="test" />
+        <file name="WatchTest.php" role="test" />
+      </dir>
+    </dir>
+
+   <file name="doc/README.md" role="doc" />
+   <file name="examples/Jm/Os/Inotify/example.tail.php" role="doc" />
+
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>5.3.0</min>
+   </php>
+   <pearinstaller>
+    <min>1.4.0</min>
+   </pearinstaller>
+   <package>
+    <name>Jm_Autoloader</name>
+    <channel>www.metashock.de/pear</channel>
+    <min>0.2.2</min>
+   </package>
+   <package>
+    <name>Jm_Util</name>
+    <channel>www.metashock.de/pear</channel>
+    <min>0.1.2</min>
+   </package>
+   <package>
+    <name>Jm_Log</name>
+    <channel>www.metashock.de/pear</channel>
+    <min>0.1.0</min>
+   </package>
+   <package>
+    <name>Jm_Filesystem</name>
+    <channel>www.metashock.de/pear</channel>
+    <min>0.1.2</min>
+   </package>
+  </required>
+ </dependencies>
+ <phprelease />
+</package>

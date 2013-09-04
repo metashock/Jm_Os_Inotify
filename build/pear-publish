@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -e
+package_file=$1
+mydir=$(dirname $0)
+
+# scp to metashock
+echo "Transferring file to metashock.de ... "
+scp "$package_file" metashock.de:~
+
+# use pirum to add the package to channel
+echo "Adding the file to PEAR channel ... "
+ssh metashock.de -- bash <<EOF
+    php pirum remove www/pear '$(basename $package_file)'
+    php pirum add www/pear '$(basename $package_file)'
+EOF
+
+#ssh metashock.de -- php pirum add www/pear "$package_file"
+

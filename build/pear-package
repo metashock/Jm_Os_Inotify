@@ -1,0 +1,109 @@
+#!/bin/bash 
+
+set -e
+
+mydir=`dirname $0`
+
+TEMPORARY_CHECKOUT="/tmp/pear_package_build"
+
+# check if there are already tags in git
+# this is required for the PEAR packgage version to be unique
+tags=`git tag`
+if [ -z `git tag` ] ; then
+    echo "you'll need to create a tag in git first"
+    exit 1
+fi
+
+version=""
+while [ -z "$version" ] ; do
+    # let the user select a git tag
+    echo "Please select a git tag:"
+    git tag
+    echo -n ">>> "
+    read input
+
+    # check if the input is valid
+    # @todo quote for regex
+    if [ -z "$input" ] || [ ! $(git tag | grep -e "^$input$") ] ; then
+        echo "unknown tag $input. try again"
+        continue
+    fi
+
+    # we have a version number
+    version="$input"
+done
+echo "Building package from version: $version:"
+
+# cp repository to /tmp and checkout the tag within it
+rm -rf "$TEMPORARY_CHECKOUT"
+mkdir "$TEMPORARY_CHECKOUT"
+cp -a . "$TEMPORARY_CHECKOUT"
+
+echo -n "Checking out version $version ... "
+cd "$TEMPORARY_CHECKOUT"
+git checkout "$version" > /dev/null 2>&1
+echo $?
+
+cd - >/dev/null 2>&1
+echo "done"
+
+# update the date and time
+echo -n "Setting current timestamp and version number in package.xml ... "
+cp "$mydir"/package.xml "$mydir"/package.xml~
+sed -i -e "s/<date>.*<\/date>/<date>`date -u +%Y-%m-%d`<\/date>/" \
+       -e "s/<time>.*<\/time>/<time>`date -u +%X`<\/time>/" \
+       -e 's/\$\$RELEASE_VERSION\$\$/'"$version"'/' \
+       -e 's/\$\$API_VERSION\$\$/'"$version"'/' \
+"$mydir"/package.xml~
+echo "done"
+
+
+echo -n "Cleanup build directory ..."
+rm -rf "$mydir"/pear/*
+echo "done"
+
+echo -n "Copy files from checkout to build directory ... "
+cp -a "$TEMPORARY_CHECKOUT"/lib/php/* "$mydir"/pear/
+cp -a "$TEMPORARY_CHECKOUT"/tests "$mydir"/pear/
+cp -a "$TEMPORARY_CHECKOUT"/examples "$mydir"/pear/
+
+mkdir -p "$mydir"/pear/doc/Jm/Os/Inotify
+cp "$TEMPORARY_CHECKOUT"/README.md "$mydir"/pear/doc/README.md
+echo "done"
+
+# remove temporary checkout
+echo -n "Removing temporary checkout: $TEMPORARY_CHECKOUT ... "
+#rm -rf "$TEMPORARY_CHECKOUT"
+echo "done"
+
+# copy package.xml into build directory
+echo -n "Copy package.xml into build directory ... "
+mv "$mydir"/package.xml~ "$mydir"/pear/package.xml
+echo "done"
+
+echo -n "Entering build directory ... "
+cd "$mydir"/pear
+echo "done"
+
+# replacing GIT $$GITVERSION$$ tags with current version
+# replace version by the selected version
+find -name '*.php' | xargs sed -i 's/GIT: \$\$GITVERSION\$\$/Release: '"$version"'/'
+
+# build the package
+output=`pear package`
+success=$?
+cd - >/dev/null 2>&1
+echo "$output"
+
+if [ "$success" != "0" ] ; then
+    echo 'Failed to build pear package. Cleaning up ... ';
+    rm -rfv "$mydir/pear"
+    echo 'Aborting'
+    exit 1
+fi
+
+package_file=`echo "$output" | grep 'done' | cut -d' ' -f2`
+
+cp -v "$mydir/pear/$package_file" "$mydir"
+
+
