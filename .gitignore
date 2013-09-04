@@ -3,4 +3,7 @@ cache.properties
 build/coverage
 build/api
 build/logs
+build/phpdoc
+build/phpdox
+.vagrant
 

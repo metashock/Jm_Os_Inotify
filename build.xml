@@ -120,6 +120,11 @@
   <exec executable="phpdox"/>
  </target>
 
+ <target name="phpdoc">
+   <delete dir="${basedir}/build/phpdoc" />
+   <exec executable="phpdoc" dir="${basedir}" />
+  </target>
+
  <target name="phpunit" description="Run unit tests with PHPUnit">
   <exec executable="phpunit" failonerror="true"/>
  </target>

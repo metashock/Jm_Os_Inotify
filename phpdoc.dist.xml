@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<phpdoc>
+  <title>Jm_Os_Inotify</title>
+  <markers>
+    <item>TODO</item>
+    <item>FIXME</item>
+  </markers>
+  <parser>
+    <target>build/phpdoc</target>
+  </parser>
+  <transformer>
+    <target>build/phpdoc</target>
+    <external-class-documentation>
+        <prefix>\Jm_Log</prefix>
+        <uri>file:///home/thorsten/Jm_Log/build/phpdoc/classes/{CLASS}.html</uri>
+    </external-class-documentation>
+  </transformer>
+  <files>
+    <directory>lib/php</directory>
+  </files>
+  <logging>
+    <level>debug</level>
+    <paths>
+      <default>build/phpdoc/{DATE}.log</default>
+      <errors>build/phpdoc/{DATE}.error.log</errors>
+    </paths>
+  </logging>
+</phpdoc>
