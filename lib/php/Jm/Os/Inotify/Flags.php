@@ -37,7 +37,7 @@
  * PHP Version >= 5.1.2
  *
  * @category  Os
- * @package   Jm_Os_Inotify
+ * @package   Jm\Os\Inotify
  * @author    Thorsten Heymann <thorsten@metashock.de>
  * @copyright 2013 Thorsten Heymann <thorsten@metashock.de>
  * @license   BSD-3 http://www.opensource.org/licenses/BSD-3-Clause
@@ -53,7 +53,7 @@
  * a certain flag is set more readable and short.
  *
  * @category  Os
- * @package   Jm_Os_Inotify
+ * @package   Jm\Os\Inotify
  * @author    Thorsten Heymann <thorsten@metashock.de>
  * @copyright 2013 Thorsten Heymann <thorsten@metashock.de>
  * @license   BSD-3 http://www.opensource.org/licenses/BSD-3-Clause
@@ -111,93 +111,40 @@ class Jm_Os_Inotify_Flags
      */
     public function __toString() {
         $flags = array();
-        
-        if(($this->integer & IN_ACCESS) === IN_ACCESS){
-            $flags []= 'IN_ACCESS';
-        }   
 
-        if(($this->integer & IN_MODIFY) === IN_MODIFY){
-            $flags []= 'IN_MODIFY';
-        }   
+        $possibleFlags = array(
+            IN_ACCESS => 'IN_ACCESS',
+            IN_ATTRIB => 'IN_ATTRIB',
+            IN_CLOSE_WRITE => 'IN_CLOSE_WRITE',
+            IN_CLOSE_NOWRITE => 'IN_CLOSE_NOWRITE',
+            IN_CREATE => 'IN_CREATE',
+            IN_DELETE => 'IN_DELETE',
+            IN_DELETE_SELF => 'IN_DELETE_SELF',
+            IN_MODIFY => 'IN_MODIFY',
+            IN_MOVE_SELF => 'IN_MOVE_SELF',
+            IN_MOVED_FROM => 'IN_MOVED_FROM',
+            IN_MOVED_TO => 'IN_MOVED_TO',
+            IN_OPEN => 'IN_OPEN',
+            IN_ISDIR => 'IN_ISDIR',
+            IN_UNMOUNT => 'IN_UNMOUNT',
+            IN_Q_OVERFLOW => 'IN_Q_OVERFLOW',
+            IN_IGNORED => 'IN_IGNORED',
+            /* add_watch specifc options */
+            IN_ONLYDIR => 'IN_ONLYDIR',
+            IN_DONT_FOLLOW => 'IN_DONT_FOLLOW',
+            IN_MASK_ADD => 'IN_MASK_ADD',
+            IN_ONESHOT => 'IN_ONESHOT',
+            /* extension */
+            Jm_Os_Inotify::IN_X_RECURSIVE => 'IN_X_RECURSIVE'
+        );
 
-        if(($this->integer & IN_ATTRIB) === IN_ATTRIB){
-            $flags []= 'IN_ATTRIB';
-        }   
-
-        if(($this->integer & IN_CLOSE_WRITE) === IN_CLOSE_WRITE){
-            $flags []= 'IN_CLOSE_WRITE';
-        }   
-
-        if(($this->integer & IN_CLOSE_NOWRITE) === IN_CLOSE_NOWRITE){
-            $flags []= 'IN_CLOSE_NOWRITE';
-        }   
-
-        if(($this->integer & IN_OPEN) === IN_OPEN){
-            $flags []= 'IN_OPEN';
-        }   
-
-        if(($this->integer & IN_MOVED_TO) === IN_MOVED_TO){
-            $flags []= 'IN_MOVED_TO';
-        }   
-
-        if(($this->integer & IN_MOVED_FROM) === IN_MOVED_FROM){
-            $flags []= 'IN_MOVED_FROM';
-        }   
-
-        if(($this->integer & IN_CREATE) === IN_CREATE){
-            $flags []= 'IN_CREATE';
-        }   
-
-        if(($this->integer & IN_DELETE) === IN_DELETE){
-            $flags []= 'IN_DELETE';
-        }   
-
-        if(($this->integer & IN_DELETE_SELF) === IN_DELETE_SELF){
-            $flags []= 'IN_DELETE_SELF';
-        }   
-
-        if(($this->integer & IN_MOVE_SELF) === IN_MOVE_SELF){
-            $flags []= 'IN_MOVE_SELF';
+        foreach($possibleFlags as $flag => $name) {       
+            if(($this->integer & $flag) === $flag){
+                $flags []= $name;
+            }   
         }
-
-        if(($this->integer & IN_UNMOUNT) === IN_UNMOUNT){
-            $flags []= 'IN_UNMOUNT';
-        }   
-
-        if(($this->integer & IN_Q_OVERFLOW) === IN_Q_OVERFLOW){
-            $flags []= 'IN_Q_OVERFLOW';
-        }   
-
-        if(($this->integer & IN_IGNORED) === IN_IGNORED){
-            $flags []= 'IN_IGNORED';
-        }   
-
-        if(($this->integer & IN_ISDIR) === IN_ISDIR){
-            $flags []= 'IN_ISDIR';
-        }
-
-        if(($this->integer & IN_ONLYDIR) === IN_ONLYDIR){
-            $flags []= 'IN_ONLYDIR';
-        }
-
-        if(($this->integer & IN_DONT_FOLLOW) === IN_DONT_FOLLOW){
-            $flags []= 'IN_DONT_FOLLOW';
-        }
-
-        if(($this->integer & IN_MASK_ADD) === IN_MASK_ADD){
-            $flags []= 'IN_MASK_ADD';
-        }
-
-        if(($this->integer & IN_ONESHOT) === IN_ONESHOT){
-            $flags []= 'IN_ONESHOT';
-        } 
-
-        if(($this->integer & Jm_Os_Inotify::IN_X_RECURSIVE)
-            === Jm_Os_Inotify::IN_X_RECURSIVE
-        ){
-            $flags []= 'IN_X_RECURSIVE';
-        } 
 
         return implode(' | ', $flags); 
     }
 }
+

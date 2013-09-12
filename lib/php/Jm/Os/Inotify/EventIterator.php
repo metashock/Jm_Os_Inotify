@@ -37,7 +37,7 @@
  * PHP Version >= 5.1.2
  *
  * @category  Os
- * @package   Jm_Os_Inotify
+ * @package   Jm\Os\Inotify
  * @author    Thorsten Heymann <thorsten@metashock.de>
  * @copyright 2013 Thorsten Heymann <thorsten@metashock.de>
  * @license   BSD-3 http://www.opensource.org/licenses/BSD-3-Clause
@@ -54,7 +54,7 @@
  * a new folder has been created in the monitored tree.
  *
  * @category  Os
- * @package   Jm_Os_Inotify
+ * @package   Jm\Os\Inotify
  * @author    Thorsten Heymann <thorsten@metashock.de>
  * @copyright 2013 Thorsten Heymann <thorsten@metashock.de>
  * @license   BSD-3 http://www.opensource.org/licenses/BSD-3-Clause

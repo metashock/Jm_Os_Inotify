@@ -37,7 +37,7 @@
  * PHP Version >= 5.1.2
  *
  * @category  Os
- * @package   Jm_Os_Inotify
+ * @package   Jm\Os\Inotify
  * @author    Thorsten Heymann <thorsten@metashock.de>
  * @copyright 2013 Thorsten Heymann <thorsten@metashock.de>
  * @license   BSD-3 http://www.opensource.org/licenses/BSD-3-Clause
@@ -49,7 +49,7 @@
  * Represensts an inotify queue
  *
  * @category  Os
- * @package   Jm_Os_Inotify
+ * @package   Jm\Os\Inotify
  * @author    Thorsten Heymann <thorsten@metashock.de>
  * @copyright 2013 Thorsten Heymann <thorsten@metashock.de>
  * @license   BSD-3 http://www.opensource.org/licenses/BSD-3-Clause
@@ -81,7 +81,7 @@ class Jm_Os_Inotify_Instance
      *
      * @var array
      */
-    protected $watch_by_path = array();
+    protected $watchByPath = array();
 
 
     /**
@@ -149,24 +149,13 @@ class Jm_Os_Inotify_Instance
             );
         }
 
-        // recursive tree watches and following is disabled per default
-        $recursive = $follow = FALSE;
-
-        // check if the recursive flags have been set
-        if(($options & Jm_Os_Inotify::IN_X_RECURSIVE)
-            === Jm_Os_Inotify::IN_X_RECURSIVE
-        ) {
-            $recursive = TRUE;
-        }
-
         $stack = array($path);
-        $rollback = FALSE;
         $root = NULL;
         
         // remove that IN_X_RECURSIVE flag from the options mask as it would 
         // otherwise lead to problems interpreting the event masks
         // returned by inotify_read()
-        $_options = $options & ~Jm_Os_Inotify::IN_X_RECURSIVE;
+        $lowLevelOptions = $options & ~Jm_Os_Inotify::IN_X_RECURSIVE;
 
         do {
 
@@ -174,10 +163,10 @@ class Jm_Os_Inotify_Instance
             $path = array_pop($stack);
 
             // add the watch to the underlying inotify instance
-            $wd = @inotify_add_watch($this->fd(), $path, $_options);
+            $wd = @inotify_add_watch($this->fd(), $path, $lowLevelOptions);
 
             // log for debugging
-            $this->log("Watching {$path} (wd:$wd) (mask:$_options)",
+            $this->log("Watching {$path} (wd:$wd) (mask:$options)",
                 Jm_Log_Level::DEBUG);
 
             // create a new watch object
@@ -191,9 +180,13 @@ class Jm_Os_Inotify_Instance
 
             // add a reference to the watch to the lookup tables
             $this->watches[$wd] = $watch;
-            $this->watch_by_path[$path] = $watch;
+            $this->watchByPath[$path] = $watch;
 
-            if(!$recursive) {
+            // check if the recursive flags have been set
+            // if not we can break here
+            if(($options & Jm_Os_Inotify::IN_X_RECURSIVE)
+                !== Jm_Os_Inotify::IN_X_RECURSIVE
+            ) {
                 break;
             }
 
@@ -259,7 +252,7 @@ class Jm_Os_Inotify_Instance
      */
     public function cleanupDeletedWatch(Jm_Os_Inotify_Watch $watch) {
         unset($this->watches[$watch->wd()]);
-        unset($this->watch_by_path[$watch->path()]);
+        unset($this->watchByPath[$watch->path()]);
         return $this;
     }
 
@@ -427,10 +420,10 @@ class Jm_Os_Inotify_Instance
                 return $this->watches[$search];
             }
         } else {
-            if(!isset($this->watch_by_path [$search])) {
+            if(!isset($this->watchByPath [$search])) {
                 return NULL;
             } else {
-                return $this->watch_by_path[$search];
+                return $this->watchByPath[$search];
             }
         }
     }
